@@ -9,7 +9,7 @@ gnome-terminal -e '/opt/ros/kinetic/bin/roslaunch sq1_extra run_sq2_for_joy.laun
 sleep 1s
 
 # Launch realsense and Downsample
-gnome-terminal -e '/home/amsl/ros_catkin_ws/src/sensor_fusion/scripts/realsense/realsense0.sh' --geometry=50x12+0+250 &
+gnome-terminal -e '/home/amsl/ros_catkin_ws/src/calibration/scripts/realsense/downsample_realsense0.sh' --geometry=50x12+0+250 &
 sleep 1s
 
 # Launch Sensor TF
