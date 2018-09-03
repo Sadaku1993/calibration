@@ -122,7 +122,7 @@ include_directories(${Eigen_INCLUDE_DIRS})
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
+   INCLUDE_DIRS include
 #  LIBRARIES calibration
 #  CATKIN_DEPENDS geometry_msgs pcl_ros roscpp rospy sensor_msgs std_msgs
 #  DEPENDS system_lib
@@ -135,7 +135,7 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+  include
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -154,7 +154,11 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/calibration_node.cpp)
 add_executable(downsample src/downsample.cpp)
+add_executable(atan src/atan.cpp)
 
+## LiDAR Detection
+add_executable(save_points src/save_points.cpp)
+add_executable(lidar_seg_plane src/lidar_seg_plane.cpp)
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -171,6 +175,23 @@ add_executable(downsample src/downsample.cpp)
 # )
 
 target_link_libraries(downsample
+    ${catkin_LIBRARIES}
+    ${OpenCV_LIBRARIES}
+    ${PCL_LIBRARIES}
+)
+target_link_libraries(atan
+    ${catkin_LIBRARIES}
+    ${OpenCV_LIBRARIES}
+    ${PCL_LIBRARIES}
+)
+
+# LiDAR Detection
+target_link_libraries(save_points
+    ${catkin_LIBRARIES}
+    ${OpenCV_LIBRARIES}
+    ${PCL_LIBRARIES}
+)
+target_link_libraries(lidar_seg_plane
     ${catkin_LIBRARIES}
     ${OpenCV_LIBRARIES}
     ${PCL_LIBRARIES}

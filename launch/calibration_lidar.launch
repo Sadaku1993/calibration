@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<launch>
+	<!--Save PointCloud-->
+	<node pkg="calibration" type="save_points" name="save_points">
+		<remap from="/cloud" to="/cloud/tf" />
+        <remap from="/output" to="/cloud/lcl" />
+        <param name="save_num" type="int" value="2000" />
+        <param name="lidar_points" type="int" value="417" />
+        <param name="hz" type="int" value="30" />
+	</node>
+
+    <!--Plane Segmentation-->
+    <node pkg="calibration" type="lidar_seg_plane" name="lidar_seg_plane" output="screen">
+        <remap from="/cloud" to="/cloud/lcl" />
+        <param name="min_ang" type="double" value="-0.5" />
+        <param name="max_ang" type="double" value="0.5" />
+        <param name="radius"  type="double" value="0.05" />
+        <param name="size"    type="int"    value="70" />
+    </node>
+</launch>
