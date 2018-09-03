@@ -10,9 +10,11 @@ sleep 1s
 
 # Launch realsense and Downsample
 gnome-terminal -e '/home/amsl/ros_catkin_ws/src/sensor_fusion/scripts/realsense/realsense0.sh' --geometry=50x12+0+250 &
+sleep 1s
 
 # Launch Sensor TF
 gnome-terminal -e '/opt/ros/kinetic/bin/roslaunch sensor_fusion laser_tf.launch' --geometry=50x12+600+0 &
+gnome-terminal -e '/opt/ros/kinetic/bin/roslaunch sensor_fusion sq2_realsense.launch' --geometry=50x12+600+250 &
 sleep 1s
 
 # Transform PointCloud from /centerlaser_ to /centerlaser
