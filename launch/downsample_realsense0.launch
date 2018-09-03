@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
     <!--Launch Realsense-->
-    <include file="$(find realsense2_camera)/launch/realsense/realsense0.launch"/>
+    <include file="$(find realsense2_camera)/launch/realsense0.launch"/>
     <!--Down sampling-->
     <node pkg="calibration" type="downsample" name="downsample_realsense0">
         <param name="ds_size" type="double" value="0.05" />
