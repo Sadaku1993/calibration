@@ -31,6 +31,10 @@ ros::Publisher pub_outlier;
 ros::Publisher pub_edge;
 ros::Publisher pub_edge_circle;
 ros::Publisher pub_cluster;
+ros::Publisher pub_centroid;
+ros::Publisher pub_transform;
+ros::Publisher pub_transform_circle;
+ros::Publisher pub_transform_centroid;
 
 void pcCallback(const sensor_msgs::PointCloud2ConstPtr& msg)
 {
@@ -60,18 +64,111 @@ void pcCallback(const sensor_msgs::PointCloud2ConstPtr& msg)
     CloudAPtr circle_edge(new CloudA);
     pickup_circle_edge(outlier, edge, circle_edge, DISTANCE);
 
-    // clustering
+    // cluster circle
     vector<Clusters <CloudA> > clusters;
-    clustering<PointA, CloudA, CloudAPtr>(circle_edge, clusters, TORELANCE, MIN_SIZE, MAX_SIZE);
-    cout<<"size:"<<clusters.size()<<endl;
+    circle_area<PointA, CloudA, CloudAPtr>(outlier, circle_edge, 0.5, clusters);
+
     CloudAPtr cluster(new CloudA);
     for(size_t i=0;i<clusters.size();i++)
-        *cluster += clusters[i].points;
+         *cluster += clusters[i].points;
 
+    // plane centroid
+    Eigen::Vector3f plane_centroid;
+    calc_centroid<CloudAPtr>(outlier, plane_centroid);
+    std::cout<<"plane centroid "<<plane_centroid.transpose()<<std::endl;
+
+    // Plane Segmentation
+    CloudAPtr plane(new CloudA);
+    pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
+    pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
+    plane_segmentation<PointA, CloudA, CloudAPtr>(outlier, plane, coefficients, inliers, 0.5);
+    std::cout<<"coefficients "<<
+                coefficients->values[0]<<" "<<
+                coefficients->values[1]<<" "<<
+                coefficients->values[2]<<" "<<
+                coefficients->values[3]<<std::endl;
+    
+    // transform
+    string laser_frame=msg->header.frame_id;
+    string board_frame="calibration_board";
+    tf::Transform tf;
+    transform(plane_centroid, coefficients, tf, laser_frame, board_frame);
+
+    // transform pointcloud
+    CloudAPtr trans_cloud(new CloudA);
+    transform_pointcloud(outlier, trans_cloud, tf.inverse());
+
+    // circle transform pointcloud
+    vector<Clusters <CloudA> > clusters_transform;
+    for(size_t i=0;i<clusters.size();i++){
+        Clusters<CloudA> cluster_transform;
+        CloudAPtr pt(new CloudA);
+        transform_pointcloud(clusters[i].points.makeShared(), pt, tf.inverse());
+        cluster_transform.points += *pt;
+        clusters_transform.push_back(cluster_transform);
+    }
+
+    CloudAPtr trans_circle(new CloudA);
+    for(size_t i=0;i<clusters_transform.size();i++)
+        *trans_circle += clusters_transform[i].points;
+
+    // least_squares_method
+    CloudAPtr transform_centroid(new CloudA);
+    for(size_t i=0;i<clusters_transform.size();i++){
+        Eigen::Vector3f centroid;
+        least_squares_method<PointA, CloudAPtr>(clusters_transform[i].points.makeShared(), centroid);
+        PointA centroid_point;
+        centroid_point.x = 0;
+        centroid_point.y = centroid(0);
+        centroid_point.z = centroid(1);
+        transform_centroid->points.push_back(centroid_point);
+        std::cout<<"centroid : "<<centroid_point<<std::endl;
+    }
+
+    // centroid
+    CloudAPtr inverse_centroid(new CloudA);
+    transform_pointcloud(transform_centroid, inverse_centroid, tf);
+
+    // centroid
+    // CloudAPtr centroid(new CloudA);
+    // for(size_t i=0;i<clusters_transform.size();i++){
+    //     Eigen::Vector3f vector;
+    //     calc_centroid<CloudAPtr>(clusters_transform[i].points.makeShared(), vector);
+    //     PointA pt;
+    //     pt.x = vector(0);
+    //     pt.y = vector(1);
+    //     pt.z = vector(2);
+    //     std::cout<<vector<<std::endl;
+    //     centroid->points.push_back(pt);
+    // }
+
+
+    // pca
+    // CloudAPtr projection(new CloudA);
+    // pcl::PCA<PointA> pca;
+    // principal_component_analysis<PointA, CloudA, CloudAPtr>(circle_edge, pca, projection);
+
+    // pca clustering
+    // vector<Clusters <CloudA> > clusters;
+    // pca_clustering(circle_edge, projection, pca, clusters);
+
+    // clustering
+    // vector<Clusters <CloudA> > clusters;
+    // clustering<PointA, CloudA, CloudAPtr>(circle_edge, clusters, TORELANCE, MIN_SIZE, MAX_SIZE);
+    // cout<<"size:"<<clusters.size()<<endl;
+    // CloudAPtr cluster(new CloudA);
+    // for(size_t i=0;i<clusters.size();i++)
+    //     *cluster += clusters[i].points;
+
+    pub_cloud(area, msg->header, pub_pickup);
     pub_cloud(outlier,  msg->header, pub_outlier);
     pub_cloud(edge, msg->header, pub_edge);
     pub_cloud(circle_edge, msg->header, pub_edge_circle); 
     pub_cloud(cluster, msg->header, pub_cluster);
+    pub_cloud(trans_cloud, msg->header, pub_transform);
+    pub_cloud(trans_circle, msg->header, pub_transform_circle);
+    pub_cloud(transform_centroid, msg->header, pub_transform_centroid);
+    pub_cloud(inverse_centroid, msg->header, pub_centroid);
 }
 
 int main(int argc, char** argv)
@@ -99,6 +196,10 @@ int main(int argc, char** argv)
     pub_edge     = nh.advertise<sensor_msgs::PointCloud2>("/cloud/edge", 10);
     pub_edge_circle = nh.advertise<sensor_msgs::PointCloud2>("/cloud/edge_circle", 10);
     pub_cluster = nh.advertise<sensor_msgs::PointCloud2>("/cloud/cluster", 10);
+    pub_centroid = nh.advertise<sensor_msgs::PointCloud2>("/cloud/centroid", 10);
+    pub_transform = nh.advertise<sensor_msgs::PointCloud2>("/cloud/transform", 10);
+    pub_transform_circle = nh.advertise<sensor_msgs::PointCloud2>("/cloud/transform/circle", 10);
+    pub_transform_centroid = nh.advertise<sensor_msgs::PointCloud2>("/cloud/centroid/transform", 10);
 
 	ros::spin();
 

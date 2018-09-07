@@ -1,0 +1,4 @@
+<launch>
+<!--tf-->
+<node pkg="tf" type="static_transform_publisher" name="realsense2_camera_manager" args="0 0 0 -1.571 0 -1.571 camera0/camera_link camera0/camera_depth_optical_frame 100" />
+</launch>

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(calibration)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -159,6 +159,11 @@ add_executable(atan src/atan.cpp)
 ## LiDAR Detection
 add_executable(save_points src/save_points.cpp)
 add_executable(lidar_seg_plane src/lidar_seg_plane.cpp)
+
+## sample
+add_executable(pcl_pca src/sample/pca.cpp)
+add_executable(svd src/sample/svd.cpp)
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -192,6 +197,18 @@ target_link_libraries(save_points
     ${PCL_LIBRARIES}
 )
 target_link_libraries(lidar_seg_plane
+    ${catkin_LIBRARIES}
+    ${OpenCV_LIBRARIES}
+    ${PCL_LIBRARIES}
+)
+
+# sample
+target_link_libraries(pcl_pca
+    ${catkin_LIBRARIES}
+    ${OpenCV_LIBRARIES}
+    ${PCL_LIBRARIES}
+)
+target_link_libraries(svd
     ${catkin_LIBRARIES}
     ${OpenCV_LIBRARIES}
     ${PCL_LIBRARIES}

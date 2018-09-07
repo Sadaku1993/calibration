@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<launch>
+
+    <!--transform pointcloud-->
+    <node pkg="sensor_fusion" type="camera_transform_pointcloud" name="camera_transform_pointcloud" output="screen">
+        <param name="target_frame" type="string" value="camera0/camera_link"/>
+        <remap from="/cloud" to="/camera0/ds_cloud" />
+        <remap from="/cloud/tf" to="/camera0/ds_cloud/tf" />
+    </node>
+
+
+    <!--Plane Segmentation-->
+    <!--node pkg="calibration" type="camera_seg_plane" name="camera_seg_plane" output="screen">
+        <remap from="/cloud" to="/cloud/lcl" />
+        <param name="min_ang" type="double" value="-0.5" />
+        <param name="max_ang" type="double" value="0.5" />
+        <param name="radius"  type="double" value="0.05" />
+        <param name="size"    type="int"    value="70" />
+    </node-->
+</launch>

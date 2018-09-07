@@ -31,7 +31,7 @@ void pub_cloud(CloudAPtr cloud,
 {
     sensor_msgs::PointCloud2 output;
     pcl::toROSMsg(*cloud, output);
-    output.header.stamp = ros::Time::now();
+    output.header.stamp = header.stamp;
     output.header.frame_id = header.frame_id;
     pub.publish(output);
 }
