@@ -1,20 +1,29 @@
 <?xml version="1.0"?>
 <launch>
+    <!--tf-->
+    <node pkg="tf" type="static_transform_publisher" name="realsense2_camera_manager" args="0 0 0 -1.571 0 -1.571 camera0/camera_link camera0/camera_depth_optical_frame 100" />
+
+    <!--relay-->
+    <node pkg="calibration" type="camera_relay" name="relay">
+        <remap from="/cloud" to="/camera0/ds_cloud" />
+        <remap from="/cloud/relay" to="/camera0/ds_cloud/relay" />
+    </node>
 
     <!--transform pointcloud-->
     <node pkg="sensor_fusion" type="camera_transform_pointcloud" name="camera_transform_pointcloud" output="screen">
         <param name="target_frame" type="string" value="camera0/camera_link"/>
-        <remap from="/cloud" to="/camera0/ds_cloud" />
+        <remap from="/cloud" to="/camera0/ds_cloud/relay" />
         <remap from="/cloud/tf" to="/camera0/ds_cloud/tf" />
     </node>
 
 
     <!--Plane Segmentation-->
-    <!--node pkg="calibration" type="camera_seg_plane" name="camera_seg_plane" output="screen">
-        <remap from="/cloud" to="/cloud/lcl" />
+    <node pkg="calibration" type="camera_seg_plane" name="camera_seg_plane" output="screen">
+        <remap from="/cloud" to="/camera0/ds_cloud/tf" />
+        <param name="min_z"   type="double" value="-0.45" />
         <param name="min_ang" type="double" value="-0.5" />
-        <param name="max_ang" type="double" value="0.5" />
-        <param name="radius"  type="double" value="0.05" />
-        <param name="size"    type="int"    value="70" />
-    </node-->
+        <param name="max_ang" type="double" value="0.45" />
+        <param name="radius"  type="double" value="0.17" />
+        <param name="size"    type="int"    value="35" />
+    </node>
 </launch>

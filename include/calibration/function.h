@@ -215,13 +215,13 @@ void transform_pointcloud(T_Ptr cloud,
 
 // ------------------outlisr removal--------------------
 template<class T_P, class T_Ptr>
-void outlier_removal(T_Ptr cloud, T_Ptr& cloud_filtered)
+void outlier_removal(T_Ptr cloud, T_Ptr& cloud_filtered, int K, double thresh)
 {
     // Create the filtering object
     pcl::StatisticalOutlierRemoval<T_P> sor;
     sor.setInputCloud (cloud);
-    sor.setMeanK (100);
-    sor.setStddevMulThresh (1.0);
+    sor.setMeanK (K);
+    sor.setStddevMulThresh (thresh);
     sor.filter (*cloud_filtered);
 }
 

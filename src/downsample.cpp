@@ -15,7 +15,7 @@ using namespace std;
 
 ros::Publisher pub_ds_cloud;
 
-double DS_SIZE = 0.03;
+double DS_SIZE = 0.01;
 void down_sampling(CloudAPtr cloud, CloudAPtr& cloud_filtered, float size)
 {
     // Create the filtering object

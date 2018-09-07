@@ -160,6 +160,9 @@ add_executable(atan src/atan.cpp)
 add_executable(save_points src/save_points.cpp)
 add_executable(lidar_seg_plane src/lidar_seg_plane.cpp)
 
+## Camera Detection
+add_executable(camera_relay src/relay.cpp)
+add_executable(camera_seg_plane src/camera_seg_plane)
 ## sample
 add_executable(pcl_pca src/sample/pca.cpp)
 add_executable(svd src/sample/svd.cpp)
@@ -197,6 +200,18 @@ target_link_libraries(save_points
     ${PCL_LIBRARIES}
 )
 target_link_libraries(lidar_seg_plane
+    ${catkin_LIBRARIES}
+    ${OpenCV_LIBRARIES}
+    ${PCL_LIBRARIES}
+)
+
+# Camera Detection
+target_link_libraries(camera_relay
+    ${catkin_LIBRARIES}
+    ${OpenCV_LIBRARIES}
+    ${PCL_LIBRARIES}
+)
+target_link_libraries(camera_seg_plane
     ${catkin_LIBRARIES}
     ${OpenCV_LIBRARIES}
     ${PCL_LIBRARIES}

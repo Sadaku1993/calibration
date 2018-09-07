@@ -54,7 +54,7 @@ void pcCallback(const sensor_msgs::PointCloud2ConstPtr& msg)
 
     // outlier removal
     CloudAPtr outlier(new CloudA);
-    outlier_removal<PointA, CloudAPtr>(area, outlier);
+    outlier_removal<PointA, CloudAPtr>(area, outlier, 100, 1.0);
 
     // edge detection
     CloudAPtr edge(new CloudA);
