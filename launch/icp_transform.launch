@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<launch>
+    <!--icp transform-->
+    <node pkg="calibration" type="icp_transform" name="icp_transform" output="screen">
+        <remap from="/lidar"  to="/cloud/centroid" />
+        <remap from="/camera" to="/camera/centroid" />
+    </node>
+</launch>

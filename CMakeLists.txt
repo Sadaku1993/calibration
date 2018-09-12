@@ -163,6 +163,10 @@ add_executable(lidar_seg_plane src/lidar_seg_plane.cpp)
 ## Camera Detection
 add_executable(camera_relay src/relay.cpp)
 add_executable(camera_seg_plane src/camera_seg_plane)
+
+# calibration
+add_executable(icp_transform src/icp_transform.cpp)
+
 ## sample
 add_executable(pcl_pca src/sample/pca.cpp)
 add_executable(svd src/sample/svd.cpp)
@@ -212,6 +216,13 @@ target_link_libraries(camera_relay
     ${PCL_LIBRARIES}
 )
 target_link_libraries(camera_seg_plane
+    ${catkin_LIBRARIES}
+    ${OpenCV_LIBRARIES}
+    ${PCL_LIBRARIES}
+)
+
+# calibration
+target_link_libraries(icp_transform
     ${catkin_LIBRARIES}
     ${OpenCV_LIBRARIES}
     ${PCL_LIBRARIES}

@@ -141,6 +141,7 @@ void edge_detection(T_Ptr cloud,
     }
 }
 
+
 // --------------pickup circle edge----------------
 template<class T_Ptr>
 void pickup_circle_edge(T_Ptr cloud,
@@ -314,6 +315,43 @@ void least_squares_method(T_Ptr cloud,
                        ans(2));
 }
 
+template<class T_P>
+double distance(T_P p1, T_P p2)
+{
+    double range = sqrt( pow(p1.x - p2.x, 2) + 
+                         pow(p1.y - p2.y, 2) + 
+                         pow(p1.z - p2.z, 2) );
+    return range;
+}
+
+template<class T_Ptr>
+bool checker(T_Ptr cloud, double param)
+{
+    bool flag = false;
+    if(cloud->points.size()==4)
+    {
+        double range0 = distance(cloud->points[0], cloud->points[1]);
+        double range1 = distance(cloud->points[1], cloud->points[2]);
+        double range2 = distance(cloud->points[2], cloud->points[3]);
+        double range3 = distance(cloud->points[3], cloud->points[0]);
+
+        if(param<fabs((range0-0.30)/0.30*100) ||
+           param<fabs((range1-0.30)/0.30*100) ||
+           param<fabs((range2-0.30)/0.30*100) ||
+           param<fabs((range3-0.30)/0.30*100)){
+            std::cout<<"centroid position is not accurate..."<<std::endl;
+            flag = false;
+        }
+
+        else{
+            std::cout<<"ALL GREEN"<<std::endl;
+            std::cout<<"0-1:"<<range0<<" 1-2:"<<range1<<" 2-3:"<<range2<<" 3-0:"<<range3<<std::endl;
+            flag = true;
+        }
+    }
+    return flag;
+}
+
 
 // ------------------Clustering--------------------
 
@@ -482,6 +520,169 @@ void circle_area(T_Ptr cloud,
             else if(pt.x<cluster.x && pt.z<cluster.z)
                 cluster_3.points.push_back(pt);
             else 
+                cluster_4.points.push_back(pt);
+        }
+    }
+
+    cluster_array.push_back(cluster_1);
+    cluster_array.push_back(cluster_2);
+    cluster_array.push_back(cluster_3);
+    cluster_array.push_back(cluster_4);
+}
+
+// -------------grid base edge detection-------------
+template<class T_P, class T_C, class T_Ptr>
+void grid_base_edge_detection(T_Ptr cloud,
+                              T_Ptr &edge,
+                              double yzreso)
+{
+    Cluster data;
+    getClusterInfo(*cloud, data);
+    std::cout<<"miny:"<<data.min_p[1]<<" "
+             <<"maxy:"<<data.max_p[1]<<" "
+             <<"minz:"<<data.min_p[2]<<" "
+             <<"maxz:"<<data.max_p[2]<<std::endl;
+
+    // int yw = (data.max_p[1]-data.min_p[1])/yzreso;
+    // int zw = (data.max_p[2]-data.min_p[1])/yzreso;
+
+    int yw = 1.5 / yzreso;
+    int zw = 1.2 / yzreso;
+
+    std::cout<<"yw:"<<yw<<" zw:"<<zw<<std::endl;
+
+    bool grid[zw][yw];
+    memset(&grid, yw*zw, false);
+
+    for(size_t i=0;i<cloud->points.size();i++){
+        int id_y = cloud->points[i].y / yzreso + yw/2;
+        int id_z = cloud->points[i].z / yzreso + zw/2;
+        if(!grid[id_z][id_y])
+            grid[id_z][id_y] = true;
+    }
+
+    for(size_t i=0;i<cloud->points.size();i++){
+        int id_y = cloud->points[i].y / yzreso + yw/2;
+        int id_z = cloud->points[i].z / yzreso + zw/2;
+        if(grid[id_z][id_y]){
+            if(!grid[id_z-1][id_y] || !grid[id_z+1][id_y] || !grid[id_z][id_y-1] || !grid[id_z][id_y+1])
+                edge->points.push_back(cloud->points[i]);
+        }
+    }
+}
+
+// ----------------sort edge detection----------------
+template<class T_P, class T_C, class T_Ptr>
+void side_edge_detection(T_Ptr cloud,
+                         T_Ptr &edge,
+                         double reso)
+{
+    Cluster data;
+    getClusterInfo(*cloud, data);
+    
+    vector<T_C> index;
+    for(double z=data.min_p[2];z<data.max_p[2];z+=reso){
+        T_C pt;
+        for(size_t i=0;i<cloud->points.size();i++){
+            if(z<=cloud->points[i].z && cloud->points[i].z<z+reso)
+                pt.points.push_back(cloud->points[i]);
+        }
+        // 点群数が少ないindexは参照しない
+        if(pt.points.size() < 10)
+            break;
+        index.push_back(pt);
+    }
+
+    // sort
+    for(size_t size=0;size<index.size();size++){
+        for(size_t i=0;i<index[size].points.size();i++){
+            for(size_t j=i+1;j<index[size].points.size();j++){
+                if(index[size].points[j].y < index[size].points[i].y){
+                    T_P tmp = index[size].points[i];
+                    index[size].points[i] = index[size].points[j];
+                    index[size].points[j] = tmp;
+                }
+            }
+        }
+    }
+    for(size_t size=0;size<index.size();size++){
+        for(size_t i=1;i<index[size].points.size()-1;i++){
+            if(fabs(index[size].points[i].y - index[size].points[i+1].y)>0.08 ||
+               fabs(index[size].points[i].y - index[size].points[i-1].y)>0.08 )
+                edge->points.push_back(index[size].points[i]);
+        }
+    }
+}
+
+template<class T_P, class T_C, class T_Ptr>
+void vertical_edge_detection(T_Ptr cloud,
+                             T_Ptr &edge,
+                             double reso)
+{
+    Cluster data;
+    getClusterInfo(*cloud, data);
+    
+    vector<T_C> index;
+    for(double y=data.min_p[1];y<data.max_p[1];y+=reso){
+        T_C pt;
+        for(size_t i=0;i<cloud->points.size();i++){
+            if(y<=cloud->points[i].y && cloud->points[i].y<y+reso)
+                pt.points.push_back(cloud->points[i]);
+        }
+        // 点群が少ないindexは参照しない
+        if(pt.points.size() < 10)
+            break;
+        index.push_back(pt);
+    }
+
+    for(size_t size=0;size<index.size();size++){
+        for(size_t i=0;i<index[size].points.size();i++){
+            for(size_t j=i+1;j<index[size].points.size();j++){
+                if(index[size].points[j].z < index[size].points[i].z){
+                    T_P tmp = index[size].points[i];
+                    index[size].points[i] = index[size].points[j];
+                    index[size].points[j] = tmp;
+                }
+            }
+        }
+    }
+
+    for(size_t size=0;size<index.size();size++){
+        for(size_t i=1;i<index[size].points.size()-1;i++){
+            if(fabs(index[size].points[i].z - index[size].points[i+1].z)>0.08 ||
+               fabs(index[size].points[i].z - index[size].points[i-1].z)>0.08)
+                edge->points.push_back(index[size].points[i]);
+        }
+    }
+}
+
+// edgeから４つのcircleを重心位置との相対位置関係よりclustering
+template<class T_P, class T_C, class T_Ptr>
+void circle_clustering(T_Ptr cloud,
+                       T_Ptr edge,
+                       vector< Clusters<T_C> >& cluster_array)
+{
+    Cluster data;
+    getClusterInfo(*cloud, data);
+
+    Clusters<T_C> cluster_1, cluster_2, cluster_3, cluster_4;
+    for(size_t i=0;i<edge->points.size();i++)
+    {
+        T_P pt = edge->points[i];
+    
+        // calibration boardの外側のエッジを削除
+        if(0.10<fabs(pt.y-data.min_p[1]) && 
+           0.10<fabs(pt.y-data.max_p[1]) &&
+           0.10<fabs(pt.z-data.min_p[2]) &&
+           0.10<fabs(pt.z-data.max_p[2])){
+
+            if(data.y<pt.y && data.z<pt.z)
+                cluster_1.points.push_back(pt);
+            else if(data.y<pt.y && pt.z<data.z)
+                cluster_2.points.push_back(pt);
+            else if(pt.y<data.y && pt.z<data.z)
+                cluster_3.points.push_back(pt);
+            else
                 cluster_4.points.push_back(pt);
         }
     }
