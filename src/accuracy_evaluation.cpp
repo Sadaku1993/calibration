@@ -24,6 +24,30 @@
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
 
+class COLORING{
+    private:
+        ros::NodeHandle nh;
+        ros::Subscriber cloud_sub;
+        ros::Publisher pub;
+    public:
+        COLORING();
+
+        void lidarCallback(const sensor_msgs::PointCloud2ConstPtr cloud);
+
+        typedef message_filters::sync_policies::Approximate<sensor_msgs::Image, sensor_msgs::CameraInfo> realsense_sync_subs;
+        message_filters::Subscriber<Image> image_sub;
+        message_filters::Subscriber<CameraInfo> camerainfo_sub;
+        message_filters::Subscriber<realsense_sync_subs> realsense_sync;
+        void realsense_callback(const sensor_msgs::ImageConstPtr image, const sensor_msgs::CameraInfoConstPtr cinfo);
+};
+
+COLORING::COLORING()
+    ; nh("~"),
+      image_sub(nh, "/image", 10),
+      camefainfo_sub(nh, "/cinfo", 10)
+{
+    nh.param<double>("min_z", MIN_Z);
+
 
 int main(int argc, char** argv)
 {

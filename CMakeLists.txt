@@ -14,6 +14,13 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   sensor_msgs
   std_msgs
+  dynamic_reconfigure
+  cv_bridge
+  image_geometry
+  image_transport
+  laser_geometry
+  message_filters
+  tf
 )
 
 ## System dependencies are found with CMake's conventions
@@ -102,15 +109,15 @@ include_directories(${Eigen_INCLUDE_DIRS})
 ##   * add a build_depend and a exec_depend tag for "dynamic_reconfigure"
 ## * In this file (CMakeLists.txt):
 ##   * add "dynamic_reconfigure" to
-##     find_package(catkin REQUIRED COMPONENTS ...)
 ##   * uncomment the "generate_dynamic_reconfigure_options" section below
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
-#   cfg/DynReconf1.cfg
-#   cfg/DynReconf2.cfg
-# )
+generate_dynamic_reconfigure_options(
+  cfg/sample1.cfg
+  cfg/calibration_camera.cfg
+  cfg/calibration_lidar.cfg
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -167,6 +174,12 @@ add_executable(camera_seg_plane src/camera_seg_plane)
 # calibration
 add_executable(icp_transform src/icp_transform.cpp)
 
+# evaluate
+add_executable(coloring src/coloring.cpp)
+
+## dynamic_reconfigure_test
+add_executable(reconfigure1 src/reconfigure1.cpp)
+
 ## sample
 add_executable(pcl_pca src/sample/pca.cpp)
 add_executable(svd src/sample/svd.cpp)
@@ -180,6 +193,10 @@ add_executable(svd src/sample/svd.cpp)
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+## dynamic_reconfigure
+add_dependencies(reconfigure1 calibration_gencfg)
+add_dependencies(camera_seg_plane calibration_camera_genfig)
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
@@ -228,6 +245,18 @@ target_link_libraries(icp_transform
     ${PCL_LIBRARIES}
 )
 
+# coloring
+target_link_libraries(coloring
+    ${catkin_LIBRARIES}
+    ${OpenCV_LIBRARIES}
+    ${PCL_LIBRARIES}
+)
+
+# dynamic_reconfigure
+target_link_libraries(reconfigure1
+    ${catkin_LIBRARIES}
+)
+
 # sample
 target_link_libraries(pcl_pca
     ${catkin_LIBRARIES}
@@ -239,6 +268,7 @@ target_link_libraries(svd
     ${OpenCV_LIBRARIES}
     ${PCL_LIBRARIES}
 )
+
 
 #############
 ## Install ##

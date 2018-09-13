@@ -330,6 +330,15 @@ bool checker(T_Ptr cloud, double param)
     bool flag = false;
     if(cloud->points.size()==4)
     {
+        for(size_t i=0;i<cloud->points.size();i++){
+            if(isnan(cloud->points[i].x) || isnan(cloud->points[i].y) || isnan(cloud->points[i].z)){
+                std::cout<<"ERROR position data is nan"<<std::endl;
+                flag = false;
+                return flag;
+            }
+        }
+
+
         double range0 = distance(cloud->points[0], cloud->points[1]);
         double range1 = distance(cloud->points[1], cloud->points[2]);
         double range2 = distance(cloud->points[2], cloud->points[3]);
@@ -342,6 +351,7 @@ bool checker(T_Ptr cloud, double param)
             std::cout<<"centroid position is not accurate..."<<std::endl;
             flag = false;
         }
+
 
         else{
             std::cout<<"ALL GREEN"<<std::endl;

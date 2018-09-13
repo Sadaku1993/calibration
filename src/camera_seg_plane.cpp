@@ -7,6 +7,10 @@
 
 #include <calibration/function.h>
 
+// dynamic reconfigure
+#include <dynamic_reconfigure/server.h>
+#include <calibration/calibration_cameraConfig.h>
+
 typedef pcl::PointXYZ PointA;
 typedef pcl::PointCloud<PointA> CloudA;
 typedef pcl::PointCloud<PointA>::Ptr CloudAPtr;
@@ -21,13 +25,6 @@ double MIN_ANG, MAX_ANG;
 
 // segmentation用
 double SEGMENT_DISTANCE;
-
-// edge detection用
-double RADIUS;
-int SIZE;
-double DISTANCE;
-double TORELANCE;
-int MIN_SIZE, MAX_SIZE;
 
 ros::Publisher pub_pickup;
 ros::Publisher pub_plane;
@@ -129,6 +126,27 @@ void pcCallback(const sensor_msgs::PointCloud2ConstPtr& msg)
     printf("\n");
 }
 
+
+bool first_flag = true;
+void callback(calibration::calibration_cameraConfig &config, uint32_t level) {
+    ROS_INFO("Reconfigure Request: %f %f %f %f %f %f %f", 
+            config.min_z,   config.max_z,
+            config.min_ang, config.max_ang,
+            config.min_dis, config.max_dis,
+            config.seg_dis);
+    if(first_flag)
+        first_flag = false;
+    else{
+        MIN_Z = config.min_z;
+        MAX_Z = config.max_z;
+        MIN_ANG = config.min_ang;
+        MAX_ANG = config.max_ang;
+        MIN_DIS = config.min_dis;
+        MAX_DIS = config.max_dis;
+        SEGMENT_DISTANCE = config.seg_dis;
+    }
+}
+
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "ransac_lidar");
@@ -140,18 +158,16 @@ int main(int argc, char** argv)
     nh.param<double>("min_ang", MIN_ANG, -0.785);
     nh.param<double>("max_ang", MAX_ANG, 0.785);
     nh.param<double>("min_dis", MIN_DIS, 1.0);
-    // plane segmentation param
-    nh.param<double>("seg_dis", SEGMENT_DISTANCE, 0.05);
-    // 
     nh.param<double>("max_dis", MAX_DIS, 3.0);
-    nh.param<double>("radius",  RADIUS,  0.05);
-    nh.param<int>("size", SIZE, 70);
-    nh.param<double>("distance", DISTANCE, 0.35);
-    nh.param<double>("tolerance", TORELANCE, 0.03);
-    nh.param<int>("min_size", MIN_SIZE, 10);
-    nh.param<int>("max_size", MAX_SIZE, 100);
+    nh.param<double>("seg_dis", SEGMENT_DISTANCE, 0.05);
 
     ros::Subscriber sub = nh.subscribe("/cloud", 10, pcCallback);
+
+    // dynamic reconfigure
+    dynamic_reconfigure::Server<calibration::calibration_cameraConfig> server;
+    dynamic_reconfigure::Server<calibration::calibration_cameraConfig>::CallbackType f;
+    f = boost::bind(&callback, _1, _2);
+    server.setCallback(f);
 
     pub_pickup      = nh.advertise<sensor_msgs::PointCloud2>("/camera/pickup", 10);
     pub_plane       = nh.advertise<sensor_msgs::PointCloud2>("/camera/plane", 10);
