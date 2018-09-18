@@ -11,7 +11,7 @@ TIME=$(date +%Y-%m-%d-%H-%M-%S)
 CLOUD="/cloud/tf"
 ODOM="/odom"
 IMU="/imu/data"
-REALSENSE="/camera0/color/image_raw/compressed /camera0/color/camera_info /camera0/ds_cloud"
+REALSENSE="/camera1/color/image_raw/compressed /camera1/color/camera_info /camera1/ds_cloud"
 
 echo $TIME &
 echo $CLOUD &
