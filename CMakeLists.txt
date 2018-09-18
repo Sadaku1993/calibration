@@ -174,8 +174,11 @@ add_executable(camera_seg_plane src/camera_seg_plane)
 # calibration
 add_executable(icp_transform src/icp_transform.cpp)
 
-# evaluate
+# coloring
 add_executable(coloring src/coloring.cpp)
+
+# calibration evaluate
+add_executable(accuracy_evaluation src/accuracy_evaluation.cpp)
 
 ## dynamic_reconfigure_test
 add_executable(reconfigure1 src/reconfigure1.cpp)
@@ -247,6 +250,13 @@ target_link_libraries(icp_transform
 
 # coloring
 target_link_libraries(coloring
+    ${catkin_LIBRARIES}
+    ${OpenCV_LIBRARIES}
+    ${PCL_LIBRARIES}
+)
+
+# calibration evaluate
+target_link_libraries(accuracy_evaluation
     ${catkin_LIBRARIES}
     ${OpenCV_LIBRARIES}
     ${PCL_LIBRARIES}

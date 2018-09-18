@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<launch>
+    <!--transform pointcloud from lidar frame to camera frame-->
+    <node pkg="sensor_fusion" type="laser_transform_pointcloud" name="laser_transform_pointcloud" >
+        <param name="target_frame" type="string" value="camera0/camera_link"/>
+        <remap from="/cloud" to="/cloud/tf" />
+        <remap from="/cloud/tf" to="/cloud/tf/camera" />
+    </node>
+
+    <!--lcl-->
+	<param name="lcl/save_num" type="int" value="2000" />
+    <param name="lcl/skip_cpunt" type="int" value="10" />
+	<node pkg="sensor_fusion" type="lcl" name="lcl" >
+        <remap from="/cloud/tf" to="/cloud/tf/camera" />
+        <remap from="/cloud/lcl" to="/cloud/lcl/camera" />
+    </node>
+
+    <!--republish-->
+    <node name="republish0" type="republish" pkg="image_transport"
+        args="compressed in:=/camera0/color/image_raw raw out:=/camera0/color/image_raw/republish" />
+
+	<!--Coloring PointCloud-->
+	<node pkg="calibration" type="coloring" name="coloring" output="screen">
+        <remap from="/cloud"        to="/cloud/lcl/camera" />
+        <remap from="/image"        to="/camera0/color/image_raw/republish" />
+        <remap from="/camera_info"  to="/camera0/color/camera_info" />
+        <remap from="/output"       to="/camera0/colored" />
+    </node>
+</launch>

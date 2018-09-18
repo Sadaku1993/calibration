@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<launch>
+    <!--evaluate-->
+    <node pkg="calibration" type="accuracy_evaluation" name="accuracy_evaluation" output="screen" >
+        <remap from="/cloud" to="/camera0/colored" />
+        <param name="min_z" type="double" value="-0.46" />
+        <param name="max_z" type="double" value="0.5" />
+        <param name="min_ang" type="double" value="-0.785" />
+        <param name="max_ang" type="double" value="0.314" />
+        <param name="min_dis" type="double" value="1.0" />
+        <param name="max_dis" type="double" value="2.0" />
+
+    </node>
+</launch>

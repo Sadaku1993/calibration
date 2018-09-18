@@ -11,6 +11,8 @@
 #include <pcl_ros/point_cloud.h>
 
 #include <opencv2/opencv.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
 #include <cv_bridge/cv_bridge.h>
 
 #include <image_transport/image_transport.h>
@@ -54,6 +56,10 @@ void callback(const ImageConstPtr& image_msg,
     cv::Mat image(cv_img_ptr->image.rows, cv_img_ptr->image.cols, cv_img_ptr->image.type());
     image = cv_bridge::toCvShare(image_msg)->image;
     
+    // realsenseはBGRでデータが格納されているため, opencv用にRGB値に変換する
+    cv::Mat image_rgb;
+    cv::cvtColor(image ,image_rgb, CV_BGR2RGB);
+    
     // camera info
     image_geometry::PinholeCameraModel cam_model_;
     cam_model_.fromCameraInfo(cinfo_msg);
@@ -73,15 +79,15 @@ void callback(const ImageConstPtr& image_msg,
         cv::Point2d uv;
         uv = cam_model_.project3dToPixel(pt_cv);
 
-        if(uv.x>0 && uv.x < image.cols && uv.y > 0 && uv.y < image.rows)
+        if(uv.x>0 && uv.x < image_rgb.cols && uv.y > 0 && uv.y < image_rgb.rows)
         {
             pcl::PointXYZRGB p;
             p.x = (*pt).x;
             p.y = (*pt).y;
             p.z = (*pt).z;
-            p.b = image.at<cv::Vec3b>(uv)[0];
-            p.g = image.at<cv::Vec3b>(uv)[1];
-            p.r = image.at<cv::Vec3b>(uv)[2];
+            p.b = image_rgb.at<cv::Vec3b>(uv)[0];
+            p.g = image_rgb.at<cv::Vec3b>(uv)[1];
+            p.r = image_rgb.at<cv::Vec3b>(uv)[2];
 
             area->points.push_back(p);
         }
