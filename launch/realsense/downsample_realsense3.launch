@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<launch>
+    <!--Launch Realsense-->
+    <include file="$(find realsense2_camera)/launch/realsense3.launch"/>
+    <!--Down sampling-->
+    <node pkg="calibration" type="downsample" name="downsample_realsense3">
+        <param name="ds_size" type="double" value="0.05" />
+        <remap from="/cloud" to="/camera3/depth/color/points" />
+        <remap from="/output" to="/camera3/ds_cloud" />
+    </node>
+</launch>
