@@ -13,10 +13,10 @@ gnome-terminal -e "rosparam set use_sim_time true" --geometry=50x12+0+0 &
 sleep 1s
 
 # tf
-gnome-terminal -e "/opt/ros/kinetic/bin/roslaunch calibration sq_lidar2realsense.launch" --geometry=50x12+0+250 &
+gnome-terminal -e "/opt/ros/kinetic/bin/roslaunch calibration sq_lidar2realsense0.launch" --geometry=50x12+0+250 &
 sleep 1s
 
-gnome-terminal -e "/opt/ros/kinetic/bin/roslaunch calibration realsense0_dumy_tf.launch" --geometry=50x12+0+500 &
+gnome-terminal -e "/opt/ros/kinetic/bin/roslaunch calibration realsense4_dumy_tf.launch" --geometry=50x12+0+500 &
 sleep 1s
 
 # coloring
@@ -33,6 +33,8 @@ sleep 1s
 
 # bagfile
 gnome-terminal -e "/opt/ros/kinetic/bin/rosbag play /home/amsl/bagfiles/2018/IRC/calibration_experiments_0907.bag --clock -l" --geometry=50x12+600+250 &
+# gnome-terminal -e "/opt/ros/kinetic/bin/rosbag play /home/amsl/bagfiles/2018/IRC/calibration_realsense4_0918.bag --clock -l" --geometry=50x12+600+250 &
+
 sleep 1s
 
 # rviz

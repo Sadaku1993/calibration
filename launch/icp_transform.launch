@@ -4,5 +4,10 @@
     <node pkg="calibration" type="icp_transform" name="icp_transform" output="screen">
         <remap from="/lidar"  to="/cloud/centroid" />
         <remap from="/camera" to="/camera/centroid" />
+
+        <!--icp用の初期位置パラメータ-->
+        <param name="init_x" type="double" value="0.130" />
+        <param name="init_y" type="double" value="0.0" />
+        <param name="init_yaw" type="double" value="0.0" />
     </node>
 </launch>

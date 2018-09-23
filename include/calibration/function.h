@@ -193,8 +193,11 @@ void transform(Eigen::Vector3f centroid,
 
     std::cout<<"unit_vector"<<unit_vector.transpose()<<std::endl;
     std::cout<<"axis_vector"<<axis_vector.transpose()<<std::endl;
- 
-    double yaw = acos( (unit_vector(0)*axis_vector(0)+unit_vector(1)*axis_vector(1)/(axis_vector(0)*axis_vector(0)+axis_vector(1)*axis_vector(1))) );
+
+    double yaw = atan(unit_vector(1)/unit_vector(0));
+    // double yaw = acos( (unit_vector(0)*axis_vector(0)+unit_vector(1)*axis_vector(1)/(axis_vector(0)*axis_vector(0)+axis_vector(1)*axis_vector(1))) );
+    if(yaw<0 && centroid(0)<0)
+        yaw+=M_PI;
     std::cout<<"yaw:"<<yaw<<std::endl;
     tf::Vector3 vector(centroid(0), centroid(1), centroid(2));
     tf::Quaternion q;

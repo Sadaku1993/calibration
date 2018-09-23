@@ -1,3 +1,14 @@
+/*
+    icp matching
+
+    author:Yudai Sadakuni
+
+    memo:
+        算出した円の重心４つでicpをかけているため、初期位置が違いすぎるとmatchingがかからない
+        初期位置パラメータinit_(x, y, z, roll, pitch, yaw)は大体の設置位置から設定してください
+
+*/
+
 #include <ros/ros.h>
 #include <ros/package.h>
 
@@ -30,13 +41,17 @@ class icp_transform{
         void lidar_callback (const PointCloud2ConstPtr& cloud);  
         void camera_callback (const PointCloud2ConstPtr& cloud);
         void transform(const ros::TimerEvent&);
-        void tf_broadcast(Eigen::Matrix4d matrix);
-        void save_launch(Eigen::Matrix4d matrix);
+        void tf_broadcast(Eigen::Matrix4d matrix, string target_frame, string source_frame);
+        void init_transform(string target_frame, string source_frame, CloudAPtr cloud);
+
+        void pub_cloud(CloudAPtr cloud, std_msgs::Header header, ros::Publisher pub);
 
         ros::NodeHandle nh;
 
         ros::Subscriber sub_lidar;
         ros::Subscriber sub_camera;
+
+        ros::Publisher pub_dumy_cloud;
 
         PointCloud2 cloud2_lidar;
         PointCloud2 cloud2_camera;
@@ -50,7 +65,8 @@ class icp_transform{
         bool lidar_flag;
         bool camera_flag;
 
-        string tf_filename;
+        double init_x, init_y, init_z, init_roll, init_pitch, init_yaw;
+        string dumy_frame;
 };
 
 // コンストラクタ初期化
@@ -60,12 +76,23 @@ icp_transform::icp_transform()
     sub_lidar  = nh.subscribe<PointCloud2> ("/lidar" , 10, &icp_transform::lidar_callback, this);
     sub_camera = nh.subscribe<PointCloud2> ("/camera", 10, &icp_transform::camera_callback, this);
 
+    pub_dumy_cloud = nh.advertise<PointCloud2>("/dumy_cloud", 10);
+
     timer = nh.createTimer(ros::Duration(1.0), &icp_transform::transform,this);
 
     nh.param<bool>("tf_flag", tf_flag, true);
-    nh.param<string>("tf_filename", tf_filename, "sq_lidar2realsense");
+
+    nh.param<double>("init_x", init_x, 0);
+    nh.param<double>("init_y", init_y, 0);
+    nh.param<double>("init_z", init_z, 0);
+    nh.param<double>("init_roll", init_roll, 0);
+    nh.param<double>("init_pitch", init_pitch, 0);
+    nh.param<double>("init_yaw", init_yaw, 0);
+
     lidar_flag = false;
     camera_flag = false;
+
+    dumy_frame = "dumy_frame";
 }
 
 void icp_transform::lidar_callback(const PointCloud2ConstPtr& msg)
@@ -105,85 +132,13 @@ void calc_rpy(Eigen::Matrix4d matrix){
     printf("RPY = < %6.3f, %6.3f. %6.3f >\n\n", roll, pitch, yaw);
 }
 
-void icp_transform::save_launch(Eigen::Matrix4d matrix)
-{
-    double x, y, z;
-    x = matrix(0, 3);
-    y = matrix(1, 3);
-    z = matrix(2, 3);
-
-    tf::Matrix3x3 mat_l;
-    double roll, pitch, yaw;
-    mat_l.setValue(matrix(0, 0), matrix(0, 1), matrix(0, 2),
-            matrix(1, 0), matrix(1, 1), matrix(1, 2),
-            matrix(2, 0), matrix(2, 1), matrix(2, 2));
-    mat_l.getRPY(roll, pitch, yaw, 1);
-
-    // Get time
-    time_t rawtime;
-    struct tm * timeinfo;
-    char buffer[80];
-
-    time (&rawtime);
-    timeinfo = localtime(&rawtime);
-
-    strftime(buffer,80,"%Y-%m-%d-%H-%M-%S", timeinfo);
-    std::string str(buffer);
-
-    ROS_INFO("Calibration finished succesfully...");
-    ROS_INFO("x=%.4f y=%.4f z=%.4f",x,y,z);
-    ROS_INFO("roll=%.4f, pitch=%.4f, yaw=%.4f", roll, pitch, yaw);
-    std::string path = ros::package::getPath("calibration");
-    string backuppath = path + "/launch/backup/calibrated_tf_"+ str +".launch";
-    // path = path + "/launch/calibrated_tf.launch";
-    path = path + "/launch/" + tf_filename +".launch";
-    
-    cout << endl << "Creating .launch file with calibrated TF in: "<< endl << path.c_str() << endl;
-    // Create .launch file with calibrated TF
-    TiXmlDocument doc;
-    TiXmlDeclaration * decl = new TiXmlDeclaration( "1.0", "utf-8", "");
-    doc.LinkEndChild( decl );
-    TiXmlElement * root = new TiXmlElement( "launch" );
-    doc.LinkEndChild( root );
-
-    TiXmlElement * arg = new TiXmlElement( "arg" );
-    arg->SetAttribute("name","stdout");
-    arg->SetAttribute("default","screen");
-    root->LinkEndChild( arg );
-
-    {{{
-    // string stereo_rotation = "0 0 0 -1.57079632679 0 -1.57079632679 stereo stereo_camera 10";
-    // TiXmlElement * stereo_rotation_node = new TiXmlElement( "node" );
-    // stereo_rotation_node->SetAttribute("pkg","tf");
-    // stereo_rotation_node->SetAttribute("type","static_transform_publisher");
-    // stereo_rotation_node->SetAttribute("name","stereo_ros_tf");
-    // stereo_rotation_node->SetAttribute("args", stereo_rotation);
-    // root->LinkEndChild( stereo_rotation_node );
-    }}}
-
-    std::ostringstream sstream;
-    sstream << x << " " << y << " " << z << " " << yaw << " " <<pitch<< " " << roll << " " << cloud2_lidar.header.frame_id << " " << cloud2_camera.header.frame_id << " 100";
-    // sstream << x << " " << y << " " << z << " " << yaw << " " <<pitch<< " " << roll << " stereo velodyne 100";
-    string tf_args = sstream.str();
-    cout << tf_args << endl;
-
-    TiXmlElement * node = new TiXmlElement( "node" );
-    node->SetAttribute("pkg","tf");
-    node->SetAttribute("type","static_transform_publisher");
-    node->SetAttribute("name", tf_filename);
-    node->SetAttribute("args", tf_args);
-    root->LinkEndChild( node );
-
-    // Save XML file and copy
-    doc.SaveFile(path);
-    // doc.SaveFile(backuppath);
-}
-
-
-
 void icp_transform::transform(const ros::TimerEvent&){
   if(lidar_flag && camera_flag)
   {
+      CloudAPtr dumy_cloud(new CloudA);
+      init_transform(cloud2_lidar.header.frame_id, dumy_frame, dumy_cloud);
+      dumy_cloud->header.frame_id = dumy_frame;
+
       std::cout<<"lidar"<<std::endl;
       for(size_t i=0;i<pcl_lidar->points.size();i++)
           std::cout<<pcl_lidar->points[i]<<std::endl;
@@ -192,12 +147,47 @@ void icp_transform::transform(const ros::TimerEvent&){
       for(size_t i=0;i<pcl_camera->points.size();i++)
           std::cout<<pcl_camera->points[i]<<std::endl;
 
+      std::cout<<"dumy_cloud"<<std::endl;
+      for(size_t i=0;i<dumy_cloud->points.size();i++)
+          std::cout<<dumy_cloud->points[i]<<std::endl;
+
+      std_msgs::Header header;
+      header.frame_id = dumy_frame;
+      pub_cloud(dumy_cloud, header, pub_dumy_cloud);
+
+
+      Eigen::Matrix4d transformation_matrix = Eigen::Matrix4d::Identity ();
+      pcl::IterativeClosestPoint<PointA, PointA> icp;
+      icp.setInputTarget(dumy_cloud);
+      icp.setInputSource(pcl_camera);
+      CloudA Final;
+      icp.align(Final);
+
+      if (icp.hasConverged ())
+          transformation_matrix = icp.getFinalTransformation ().cast<double>();
+      else
+      {
+          PCL_ERROR ("\nICP has not converged.\n");
+          return ;
+      }
+
+      tf_broadcast(transformation_matrix, dumy_cloud->header.frame_id, cloud2_camera.header.frame_id);
+
+      /*
       pcl::IterativeClosestPoint<PointA, PointA> icp;
       icp.setInputTarget(pcl_lidar->makeShared());
       icp.setInputSource(pcl_camera->makeShared());
-
+      
       CloudA Final;
       icp.align(Final);
+
+      if (icp.hasConverged ())
+          transformation_matrix = icp.getFinalTransformation ().cast<double>();
+      else
+      {
+          PCL_ERROR ("\nICP has not converged.\n");
+          return ;
+      }
 
       //変換matrixを表示する
       Eigen::Matrix4d transformation_matrix = Eigen::Matrix4d::Identity ();
@@ -205,15 +195,37 @@ void icp_transform::transform(const ros::TimerEvent&){
       // print4x4Matrix (transformation_matrix);
       // calc_rpy(transformation_matrix);
 
-      tf_broadcast(transformation_matrix);
-      save_launch(transformation_matrix);
+      tf_broadcast(transformation_matrix, cloud2_lidar.header.frame_id, cloud2_camera.header.frame_id);
+      */
 
       lidar_flag = false;
       camera_flag = false;
   }
 }
 
-void icp_transform::tf_broadcast(Eigen::Matrix4d matrix){
+void icp_transform::init_transform(string target_frame,
+                                   string source_frame,
+                                   CloudAPtr cloud)
+{
+    tf::Vector3 vector;
+    tf::Quaternion q;
+
+    vector.setValue(init_x, init_y, init_z);
+    q = tf::createQuaternionFromRPY(init_roll, init_pitch, init_yaw);
+
+    tf::Transform tf;
+    tf.setOrigin(vector);
+    tf.setRotation(q);
+
+    static tf::TransformBroadcaster br;
+    br.sendTransform(tf::StampedTransform(tf, ros::Time::now(), target_frame, source_frame));
+
+    pcl_ros::transformPointCloud(*pcl_lidar, *cloud, tf.inverse());
+}
+
+void icp_transform::tf_broadcast(Eigen::Matrix4d matrix,
+                                 string target_frame,
+                                 string source_frame){
     tf::Vector3 vector;
     vector.setValue(matrix(0, 3), matrix(1, 3), matrix(2, 3));
 
@@ -231,8 +243,20 @@ void icp_transform::tf_broadcast(Eigen::Matrix4d matrix){
     static tf::TransformBroadcaster br;
     tf.setOrigin(vector);
     tf.setRotation(q);
-    br.sendTransform(tf::StampedTransform(tf, ros::Time::now(), cloud2_lidar.header.frame_id, cloud2_camera.header.frame_id));
+    br.sendTransform(tf::StampedTransform(tf, ros::Time::now(), target_frame, source_frame));
 }
+
+void icp_transform::pub_cloud(CloudAPtr cloud,
+                              std_msgs::Header header, 
+                              ros::Publisher pub)
+{
+    sensor_msgs::PointCloud2 output;
+    pcl::toROSMsg(*cloud, output);
+    output.header.stamp = ros::Time::now();
+    output.header.frame_id = header.frame_id;
+    pub.publish(output);
+}
+
 
 int main(int argc, char** argv)
 {

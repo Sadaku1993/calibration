@@ -173,6 +173,8 @@ add_executable(camera_seg_plane src/camera_seg_plane)
 
 # calibration
 add_executable(icp_transform src/icp_transform.cpp)
+add_executable(tf_saver src/tf_saver.cpp)
+add_executable(transform_test src/transform_test.cpp)
 
 # coloring
 add_executable(coloring src/coloring.cpp)
@@ -243,6 +245,16 @@ target_link_libraries(camera_seg_plane
 
 # calibration
 target_link_libraries(icp_transform
+    ${catkin_LIBRARIES}
+    ${OpenCV_LIBRARIES}
+    ${PCL_LIBRARIES}
+)
+target_link_libraries(tf_saver
+    ${catkin_LIBRARIES}
+    ${OpenCV_LIBRARIES}
+    ${PCL_LIBRARIES}
+)
+target_link_libraries(transform_test
     ${catkin_LIBRARIES}
     ${OpenCV_LIBRARIES}
     ${PCL_LIBRARIES}

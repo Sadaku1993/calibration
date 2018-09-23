@@ -59,10 +59,16 @@ void pcCallback(const sensor_msgs::PointCloud2ConstPtr& msg)
                             MAX_ANG,
                             MIN_DIS,
                             MAX_DIS);
+    
+    if(area->points.size()==0)
+        return;
 
     // outlier removal
     CloudAPtr outlier(new CloudA);
     outlier_removal<PointA, CloudAPtr>(area, outlier, 100, 1.0);
+    
+    if(outlier->points.size()==0)
+        return;
 
     // Plane Segmentation
     CloudAPtr plane(new CloudA);
@@ -74,6 +80,9 @@ void pcCallback(const sensor_msgs::PointCloud2ConstPtr& msg)
                 coefficients->values[1]<<" "<<
                 coefficients->values[2]<<" "<<
                 coefficients->values[3]<<std::endl;
+
+    if(plane->points.size()==0)
+        return;
 
     // plane centroid
     Eigen::Vector3f plane_centroid;

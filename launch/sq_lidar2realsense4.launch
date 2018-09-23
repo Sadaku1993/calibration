@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<launch>
+    <arg name="stdout" default="screen" />
+    <node pkg="tf" type="static_transform_publisher" name="sq_lidar2realsense4" args="0.0428249 -0.177005 0.000247829 -1.2545 -0.00033547 0.0147243 centerlaser camera4/camera_link 100" />
+</launch>

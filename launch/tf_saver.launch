@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<launch>
+    <!--icp transform-->
+    <node pkg="calibration" type="tf_saver" name="tf_saver" output="screen">
+        <param name="target_frame" type="string" value="centerlaser" />
+        <param name="source_frame" type="string" value="camera0/camera_link" />
+        <param name="tf_filename"  type="string" value="sq_lidar2realsense0" />
+    </node>
+</launch>

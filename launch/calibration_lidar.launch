@@ -12,8 +12,9 @@
     <!--Plane Segmentation-->
     <node pkg="calibration" type="lidar_seg_plane" name="lidar_seg_plane" output="screen">
         <remap from="/cloud" to="/cloud/lcl" />
-        <param name="min_ang" type="double" value="-0.5" />
-        <param name="max_ang" type="double" value="0.5" />
+        <param name="min_ang" type="double" value="-0.45" />
+        <param name="max_ang" type="double" value="0.45" />
+        <param name="max_dis" type="double" value="2.3" />
         <param name="radius"  type="double" value="0.05" />
         <param name="size"    type="int"    value="70" />
     </node>

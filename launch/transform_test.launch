@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<launch>
+    <!--tf-->
+    <include file="$(find calibration)/launch/sq_lidar2realsense4.launch"/>
+
+    <!--transform_test-->
+    <node pkg="calibration" type="transform_test" name="transform_test" output="screen">
+        <param name="x" type="double" value="1.76286"/>
+        <param name="y" type="double" value="-0.11141"/>
+        <param name="z" type="double" value="-0.0421626"/>
+        <param name="target_frame" type="string" value="centerlaser"/>
+        <param name="source_frame" type="string" value="camera4/camera_link"/>
+    </node>
+</launch>

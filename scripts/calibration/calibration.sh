@@ -24,12 +24,17 @@ sleep 1s
 gnome-terminal -e "/opt/ros/kinetic/bin/roslaunch calibration icp_transform.launch" --geometry=50x12+0+750 &
 sleep 1s
 
+# tf_saver
+gnome-terminal -e "/opt/ros/kinetic/bin/roslaunch calibration tf_saver.launch" --geometry=50x12+600+0 &
+sleep 1s
+
 # rqt_reconfigure
-gnome-terminal -e "/opt/ros/kinetic/bin/rosrun rqt_reconfigure rqt_reconfigure" --geometry=50x12+600+0 &
+gnome-terminal -e "/opt/ros/kinetic/bin/rosrun rqt_reconfigure rqt_reconfigure" --geometry=50x12+600+250 &
 sleep 1s
 
 # bagfile
 gnome-terminal -e "/opt/ros/kinetic/bin/rosbag play /home/amsl/bagfiles/2018/IRC/calibration_0907.bag --clock -l" --geometry=50x12+600+250 &
+# gnome-terminal -e "/opt/ros/kinetic/bin/rosbag play /home/amsl/bagfiles/2018/IRC/calibration_realsense4_0918.bag --clock -l" --geometry=50x12+600+250 &
 sleep 1s
 
 # rviz
